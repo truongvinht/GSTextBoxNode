@@ -1,0 +1,3 @@
+[submodule "GSTextAutoTypeNode"]
+	path = GSTextAutoTypeNode
+	url = git@github.com:truongvinht/GSTextAutoTypeNode.git
