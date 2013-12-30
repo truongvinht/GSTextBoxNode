@@ -56,8 +56,17 @@ typedef enum{
 /** Method will be called after finished showing text and user touched within box*/
 - (void)didTouchEndOfText;
 
-/** Method to notify after button touched*/
+/** Method to notify after button touched
+ *
+ *  @param button is the button position
+ */
 - (void)buttonWithLabel:(GSTextBoxButton)button;
+
+/** Method to notify directly after a button starts to be long pressed*/
+- (void)longPressedBegan:(GSTextBoxButton)button;
+
+/** Method to notify directly after a button ended to be long pressed*/
+- (void)longPressedEnd:(GSTextBoxButton)button;
 
 @end
 
@@ -137,12 +146,11 @@ typedef enum{
  */
 - (void)initButtonLabelsForTopLeft:(NSString*)tLeft andTopRight:(NSString*)tRight andBottomLeft:(NSString*)bLeft andBottomRight:(NSString*)bRight;
 
-/** Method to receive Touch events from UIView
+/** Method to activate the touch events by passing a SKView
  *
- *  @param touches are the touch events from UIView
- *  @param event is the corresponding event
+ *  @param view is the view which gets touch events
  */
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event;
+- (void)activateTouchEventsInView:(SKView*)view;
 
 @end
 

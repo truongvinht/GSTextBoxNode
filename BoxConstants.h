@@ -65,4 +65,10 @@
 ///symbol of the next page indicator
 #define GSTEXTBOX_NEXT_SYMBOL @"»"
 
+//image name of the text box frame
+#define GSTEXTBOX_BACKGROUND_FRAME @"textbox.png"
+
+//image name of the text box grid for battle mode
+#define GSTEXTBOX_BACKGROUND_GRID @"BoxbuttonGrid.png"
+
 #endif

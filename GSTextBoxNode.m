@@ -63,6 +63,9 @@
 /// battle mode button bottom right
 @property(nonatomic,strong) GSTextViewNode *bottomRight;
 
+/// view to handle touch events
+@property(nonatomic,weak) SKView *view;
+
 @end
 
 @implementation GSTextBoxNode
@@ -95,13 +98,13 @@
     
     if (self = [super init]) {
         //init the background box
-        self.boxBackground = [SKSpriteNode spriteNodeWithImageNamed:@"textbox.png"];
+        self.boxBackground = [SKSpriteNode spriteNodeWithImageNamed:GSTEXTBOX_BACKGROUND_FRAME];
         [self.boxBackground setAnchorPoint:CGPointZero];
         [self.boxBackground setZPosition:kBoxLayerTagValue];
         [self addChild:self.boxBackground];
         
         //init grid for the battle mode
-        self.gridBox = [SKSpriteNode spriteNodeWithImageNamed:@"BoxbuttonGrid.png"];
+        self.gridBox = [SKSpriteNode spriteNodeWithImageNamed:GSTEXTBOX_BACKGROUND_GRID];
         [self.gridBox setAnchorPoint:CGPointZero];
         
         //font name
@@ -151,115 +154,153 @@
         //init arrow indicator
         [self.nextPage setPosition:CGPointMake(screenSize.width-GSTEXT_BOTTOM_OFFSET, GSTEXT_BOTTOM_OFFSET)];
         self.nextPage.fontColor = _fontColor;
+        
     }
     
     return self;
 }
 
-
 - (GSTextBoxNode*)initWithFontName:(NSString*)fontName{
     return [self initWithFontName:fontName withFontSize:GSTEXTBOX_DEFAULT_FONTSIZE];
 }
 
-#pragma mark - Touch events
+#pragma mark - Touch Gesture Methods
 
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event{
+- (void)singleTap:(UIGestureRecognizer*)recognizer{
     
     //skip touch events as long as text is running
     if (![self.nextPage parent]&&self.boxLayout == GSTextBoxLayoutText) {
         return;
     }
     
-    UITouch *touch = [touches anyObject];
-    
-    //single tap
-    if (touch.tapCount == 1) {
-        CGPoint tapLocation = [touch locationInNode:self];
+    //at the end of the touch event
+    if (recognizer.state == UIGestureRecognizerStateEnded) {
         
-        switch (self.boxLayout) {
-            case GSTextBoxLayoutText:{ //text box
-                //check wether tap is within the box
-                if (CGRectContainsPoint(self.boxBackground.frame, tapLocation)) {
-                    [self.nextPage removeFromParent];
-                    [self continueTypeNextPage];
-                }else{
-                    //ignore touch events outside of the box / maybe use it as cancel event
-                }
-            }break;
-            case GSTextBoxLayoutBattle:{ //battle box with 4 buttons
-                if (CGRectContainsPoint(self.boxBackground.frame, tapLocation)) {
-                    //touch within the box
-                    
-                    //check which area
-                    if (tapLocation.y >= self.boxBackground.frame.size.height/2) {
-                        //top item
-                        if (tapLocation.x <= self.boxBackground.frame.size.width/2) {
-                            //left top
-                            if (_delegate) {
-                                if ([self.delegate respondsToSelector:@selector(buttonWithLabel:)]&&self.topLeft) {
-                                    [self.delegate buttonWithLabel:GSTextBoxButtonTopLeft];
-                                }
-                            }
-                        }else{
-                            //right top
-                            if (_delegate) {
-                                if ([self.delegate respondsToSelector:@selector(buttonWithLabel:)]&&self.topRight) {
-                                    [self.delegate buttonWithLabel:GSTextBoxButtonTopRight];
-                                }
-                            }
-                        }
-                    }else{
-                        //bottom item
-                        if (tapLocation.x <= self.boxBackground.frame.size.width/2) {
-                            //left bottom
-                            if (_delegate) {
-                                if ([self.delegate respondsToSelector:@selector(buttonWithLabel:)]&&self.bottomLeft) {
-                                    [self.delegate buttonWithLabel:GSTextBoxButtonBottomLeft];
-                                }
-                            }
-                        }else{
-                            //right bottom
-                            if (_delegate) {
-                                if ([self.delegate respondsToSelector:@selector(buttonWithLabel:)]&&self.bottomRight) {
-                                    [self.delegate buttonWithLabel:GSTextBoxButtonBottomRight];
-                                }
-                            }
-                        }
-                    }
-                    
-                }else{
-                    //cancel touch
-                    if (_delegate) {
-                        if ([self.delegate respondsToSelector:@selector(buttonWithLabel:)]) {
-                            [self.delegate buttonWithLabel:GSTextBoxButtonCancel];
-                        }
-                    }
-                }
-            }break;
-            default:
-                NSLog(@"GSTextBoxNode#Bad Touch, unknown event");
-                break;
+        CGPoint locationPoint = [recognizer locationInView:self.view];
+        
+        //convert the coordinate system
+        CGPoint convertedPoint = CGPointMake(locationPoint.x, self.boxBackground.frame.size.height - (locationPoint.y - ( self.view.bounds.size.height-self.boxBackground.frame.size.height)));
+        
+        [self battleBoxTouchedIn:convertedPoint];
+    }
+    
+}
+
+- (void)showDescription:(UIGestureRecognizer*)recognizer{
+    
+    //skip touch events as long as text is running
+    if (![self.nextPage parent]&&self.boxLayout == GSTextBoxLayoutText) {
+        return;
+    }
+    
+    CGPoint locationPoint = [recognizer locationInView:self.view];
+    
+    //convert the coordinate system
+    CGPoint convertedPoint = CGPointMake(locationPoint.x, self.boxBackground.frame.size.height - (locationPoint.y - ( self.view.bounds.size.height-self.boxBackground.frame.size.height)));
+    
+    //call touch began
+    if (recognizer.state == UIGestureRecognizerStateBegan) {
+        if (self.delegate) {
+            if ([self.delegate respondsToSelector:@selector(longPressedBegan:)]) {
+                [self.delegate longPressedBegan:[self getButtonForPoint:convertedPoint]];
+            }
+        }
+    }
+    
+    //call touch end
+    if (recognizer.state == UIGestureRecognizerStateEnded) {
+        if (self.delegate) {
+            if ([self.delegate respondsToSelector:@selector(longPressedEnd:)]) {
+                [self.delegate longPressedEnd:[self getButtonForPoint:convertedPoint]];
+            }
+        }
+    }
+}
+
+- (void)activateTouchEventsInView:(SKView*)view{
+    
+    //check wether it is valid
+    if (view) {
+        
+        //allow user interaction
+        [view setUserInteractionEnabled:YES];
+        
+        //register gesture recognizers
+        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(singleTap:)];
+        
+        UILongPressGestureRecognizer *longGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showDescription:)];
+        
+        //single tap
+        [tapGesture setNumberOfTapsRequired:1];
+        [tapGesture setNumberOfTouchesRequired:1];
+        [tapGesture requireGestureRecognizerToFail:longGesture];
+        
+        //add gesture to view
+        [view addGestureRecognizer:tapGesture];
+        [view addGestureRecognizer:longGesture];
+        self.view = view;
+    }
+}
+#pragma mark - Touch events
+
+/** Helper method to get the button for given point
+ *
+ *  @param is the touched point
+ *  @return the button tag
+ */
+- (GSTextBoxButton)getButtonForPoint:(CGPoint)point{
+    
+    CGRect boxFrame = self.boxBackground.frame;
+    
+    //check touch
+    if (CGRectContainsPoint(boxFrame, point)) {
+        //touch within the box
+        
+        //check which area
+        if (point.y >= self.boxBackground.frame.size.height/2) {
+            //top item
+            return (point.x <= self.boxBackground.frame.size.width/2)?GSTextBoxButtonTopLeft:GSTextBoxButtonTopRight;
+            
+        }else{
+            //bottom item
+            if (point.x <= self.boxBackground.frame.size.width/2) {
+                //left bottom
+                return GSTextBoxButtonBottomLeft;
+            }else{
+                //right bottom
+                return GSTextBoxButtonBottomRight;
+            }
         }
         
     }else{
-        //unknown handling for multiple touches
-    }
-    
-}
-
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
-    
-    //skip touch events as long as text is running
-    if (![self.nextPage parent]) {
-        return;
+        //cancel touch
+        return GSTextBoxButtonCancel;
     }
 }
 
-- (void)ccTouchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event{
+- (void)battleBoxTouchedIn:(CGPoint)tapLocation{
     
-    //skip touch events as long as text is running
-    if (![self.nextPage parent]) {
-        return;
+    switch (self.boxLayout) {
+        case GSTextBoxLayoutText:{ //text box
+            //check wether tap is within the box
+            if (CGRectContainsPoint(self.boxBackground.frame, tapLocation)) {
+                [self.nextPage removeFromParent];
+                [self continueTypeNextPage];
+            }else{
+                //ignore touch events outside of the box / maybe use it as cancel event
+            }
+        }break;
+        case GSTextBoxLayoutBattle:{ //battle box with 4 buttons
+            
+            if (_delegate) {
+                if ([self.delegate respondsToSelector:@selector(buttonWithLabel:)]) {
+                    [self.delegate buttonWithLabel:[self getButtonForPoint:tapLocation]];
+                }
+            }
+        }break;
+        default:
+            NSLog(@"GSTextBoxNode#Bad Touch, unknown event");
+            break;
     }
 }
 
@@ -403,6 +444,11 @@
 
 - (void) typeText:(NSString*)text withDelay:(float) delay withHide:(BOOL)willHide{
     
+    //automatically switch to text box layout
+    if (_boxLayout == GSTextBoxLayoutBattle) {
+        [self setBoxMode:GSTextBoxLayoutText];
+    }
+    
     //update hide flag
     self.willHide = willHide;
     
@@ -437,38 +483,42 @@
     //top left button
     if (tLeft) {
         self.topLeft = [[GSTextViewNode alloc] initNodeWithFontNamed:_fontName];
-        self.topLeft.fontColor = _fontColor;
-        self.topLeft.fontSize = _battleFontSize;
-        [self.topLeft setText:[tLeft stringSplitByNumOfSymbols:GSBOX_TEXTBOX_BATTLE_LENGTH]];
         [self.topLeft setPosition:CGPointMake(boxSize.width*1/4, boxSize.height*3/4-fixedInsets)];
     }
+    self.topLeft.fontColor = _fontColor;
+    self.topLeft.fontSize = _battleFontSize;
+    [self.topLeft setText:[tLeft stringSplitByNumOfSymbols:GSBOX_TEXTBOX_BATTLE_LENGTH]];
+    
     
     //top right button
     if (tRight) {
         self.topRight = [[GSTextViewNode alloc] initNodeWithFontNamed:_fontName];
-        self.topRight.fontColor = _fontColor;
-        self.topRight.fontSize = _battleFontSize;
-        [self.topRight setText:[tRight stringSplitByNumOfSymbols:GSBOX_TEXTBOX_BATTLE_LENGTH]];
         [self.topRight setPosition:CGPointMake(boxSize.width*3/4, boxSize.height*3/4-fixedInsets)];
     }
+    self.topRight.fontColor = _fontColor;
+    self.topRight.fontSize = _battleFontSize;
+    [self.topRight setText:[tRight stringSplitByNumOfSymbols:GSBOX_TEXTBOX_BATTLE_LENGTH]];
+    
     
     //bottom left button
     if (bLeft) {
         self.bottomLeft = [[GSTextViewNode alloc] initNodeWithFontNamed:_fontName];
-        self.bottomLeft.fontColor = _fontColor;
-        self.bottomLeft.fontSize = _battleFontSize;
-        [self.bottomLeft setText:[bLeft stringSplitByNumOfSymbols:GSBOX_TEXTBOX_BATTLE_LENGTH]];
         [self.bottomLeft setPosition:CGPointMake(boxSize.width*1/4, boxSize.height*1/4+fixedInsets)];
     }
+    self.bottomLeft.fontColor = _fontColor;
+    self.bottomLeft.fontSize = _battleFontSize;
+    [self.bottomLeft setText:[bLeft stringSplitByNumOfSymbols:GSBOX_TEXTBOX_BATTLE_LENGTH]];
+    
     
     //bottom right button
     if (bRight) {
         self.bottomRight = [[GSTextViewNode alloc] initNodeWithFontNamed:_fontName];
-        self.bottomRight.fontColor = _fontColor;
-        self.bottomRight.fontSize = _battleFontSize;
-        [self.bottomRight setText:[bRight stringSplitByNumOfSymbols:GSBOX_TEXTBOX_BATTLE_LENGTH]];
         [self.bottomRight setPosition:CGPointMake(boxSize.width*3/4, boxSize.height*1/4+fixedInsets)];
     }
+    self.bottomRight.fontColor = _fontColor;
+    self.bottomRight.fontSize = _battleFontSize;
+    [self.bottomRight setText:[bRight stringSplitByNumOfSymbols:GSBOX_TEXTBOX_BATTLE_LENGTH]];
+    
 }
 
 
