@@ -33,5 +33,13 @@ To handle touch events in battle mode you need to implement the protocol TextBox
 }
 ```
 
+Hint: If you can't interact with the box, then you need to implement the following lines
+```Objective-C
+- (void)didMoveToView:(SKView *)view{
+    // textbox is the GSTextBoxNode 
+    [textBox activateTouchEventsInView:view];
+}
+```
+
 #License
 MIT License (MIT)
