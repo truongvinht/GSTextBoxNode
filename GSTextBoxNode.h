@@ -44,7 +44,6 @@ typedef enum{
     GSTextBoxButtonCancel
 }GSTextBoxButton;
 
-
 /** Protocol for calling parent after finish typing*/
 @protocol GSTextBoxDelegate <NSObject>
 
@@ -101,6 +100,9 @@ typedef enum{
 ///font color of the displaying text
 @property(SK_NONATOMIC_IOSONLY, strong) SKColor *fontColor;
 
+///y-position of the text box (default = 0 )
+@property(nonatomic,readonly) CGFloat boxPosition;
+
 /** Method to init a new text box node
  * 
  *  @param font is the font for any text displayed within the box
@@ -110,11 +112,28 @@ typedef enum{
 
 /** Method to init a new text box node
  *
+ *  @param font is the font for any text displayed within the box
+ *  @param yPos is the y-position of the box
+ *  @return new instance of GSTextBoxNode
+ */
+- (GSTextBoxNode*)initWithFont:(UIFont *)font position:(CGFloat)yPos;
+
+/** Method to init a new text box node
+ *
  *  @param fontName is the name of the font
  *  @param fontSize font size of the displaying text
  *  @return new instance of GSTextBoxNode
  */
 - (GSTextBoxNode*)initWithFontName:(NSString*)fontName withFontSize:(CGFloat)fontSize;
+
+/** Method to init a new text box node with given position
+ *
+ *  @param fontName is the name of the font
+ *  @param fontSize font size of the displaying text
+ *  @param yPos is the y-position of the box
+ *  @return new instance of GSTextBoxNode
+ */
+- (GSTextBoxNode*)initWithFontName:(NSString *)fontName withFontSize:(CGFloat)fontSize position:(CGFloat)yPos;
 
 /** Method to init a new text box node and default font size of 18
  *
@@ -122,6 +141,14 @@ typedef enum{
  *  @return new instance of GSTextBoxNode
  */
 - (GSTextBoxNode*)initWithFontName:(NSString*)fontName;
+
+/** Method to init a new text box node and default font size of 18
+ *
+ *  @param fontName is the name of the font
+ *  @param yPos is the y-position of the box
+ *  @return new instance of GSTextBoxNode
+ */
+- (GSTextBoxNode*)initWithFontName:(NSString*)fontName position:(CGFloat)yPos;
 
 /** Method to set the box layout
  *

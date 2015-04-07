@@ -66,6 +66,9 @@
 /// view to handle touch events
 @property(nonatomic,weak) SKView *view;
 
+///y-position of the text box (default = 0 )
+@property(nonatomic,readwrite) CGFloat boxPosition;
+
 @end
 
 @implementation GSTextBoxNode
@@ -93,8 +96,17 @@
     return box;
 }
 
+- (GSTextBoxNode*)initWithFont:(UIFont *)font position:(CGFloat)yPos{
+    GSTextBoxNode *box = [self initWithFontName:font.fontName withFontSize:font.pointSize position:yPos];
+    return box;
+}
 
 - (GSTextBoxNode*)initWithFontName:(NSString*)fontName withFontSize:(CGFloat)fontSize{
+    return [self initWithFontName:fontName withFontSize:fontSize position:0];
+}
+
+
+- (GSTextBoxNode*)initWithFontName:(NSString *)fontName withFontSize:(CGFloat)fontSize position:(CGFloat)yPos{
     
     if (self = [super init]) {
         //init the background box
@@ -103,9 +115,25 @@
         [self.boxBackground setZPosition:kBoxLayerTagValue];
         [self addChild:self.boxBackground];
         
+        //remember position
+        self.boxPosition = yPos;
+        
+        //read screen size
+        CGSize screenSize = [[UIScreen mainScreen] bounds].size;
+        
+        //move the box to correct position
+        CGPoint boxBGOrigin = self.boxBackground.position;
+        boxBGOrigin.y = yPos;
+        [self.boxBackground setPosition:boxBGOrigin];
+        
         //init grid for the battle mode
         self.gridBox = [SKSpriteNode spriteNodeWithImageNamed:GSTEXTBOX_BACKGROUND_GRID];
         [self.gridBox setAnchorPoint:CGPointZero];
+        
+        //move the grid box to correct position
+        CGPoint gridBoxOrigin = self.gridBox.position;
+        gridBoxOrigin.y = yPos;
+        [self.gridBox setPosition:gridBoxOrigin];
         
         //font name
         self.fontName = fontName;
@@ -117,12 +145,11 @@
         self.battleFontSize = fontSize+3;
         self.fontSize = fontSize;
         
-        CGSize screenSize = [[UIScreen mainScreen] bounds].size;
         
         self.textLabel = [GSTextAutoTypeNode labelWithFontName:fontName];
         self.textLabel.fontSize = _fontSize;
         
-        [self.textLabel setPosition:CGPointMake(screenSize.width/2, self.boxBackground.size.height/2)];
+        [self.textLabel setPosition:CGPointMake(screenSize.width/2, self.boxBackground.size.height/2+yPos)];
         
         [self.textLabel setZPosition:kTextBoxLayerTagValue];
         
@@ -152,7 +179,7 @@
         [self.nextPage setText:arrowLabel];
         
         //init arrow indicator
-        [self.nextPage setPosition:CGPointMake(screenSize.width-GSTEXT_BOTTOM_OFFSET, GSTEXT_BOTTOM_OFFSET)];
+        [self.nextPage setPosition:CGPointMake(screenSize.width-GSTEXT_BOTTOM_OFFSET, GSTEXT_BOTTOM_OFFSET+yPos)];
         self.nextPage.fontColor = _fontColor;
         
     }
@@ -162,6 +189,11 @@
 
 - (GSTextBoxNode*)initWithFontName:(NSString*)fontName{
     return [self initWithFontName:fontName withFontSize:GSTEXTBOX_DEFAULT_FONTSIZE];
+}
+
+
+- (GSTextBoxNode*)initWithFontName:(NSString*)fontName position:(CGFloat)pos{
+    return [self initWithFontName:fontName withFontSize:GSTEXTBOX_DEFAULT_FONTSIZE position:pos];
 }
 
 #pragma mark - Touch Gesture Methods
@@ -257,7 +289,7 @@
         //touch within the box
         
         //check which area
-        if (point.y >= self.boxBackground.frame.size.height/2) {
+        if (point.y >= self.boxBackground.frame.size.height/2+self.boxPosition) {
             //top item
             return (point.x <= self.boxBackground.frame.size.width/2)?GSTextBoxButtonTopLeft:GSTextBoxButtonTopRight;
             
@@ -483,7 +515,7 @@
     //top left button
     if (tLeft) {
         self.topLeft = [[GSTextViewNode alloc] initNodeWithFontNamed:_fontName];
-        [self.topLeft setPosition:CGPointMake(boxSize.width*1/4, boxSize.height*3/4-fixedInsets)];
+        [self.topLeft setPosition:CGPointMake(boxSize.width*1/4, boxSize.height*3/4-fixedInsets+self.boxPosition)];
     }
     self.topLeft.fontColor = _fontColor;
     self.topLeft.fontSize = _battleFontSize;
@@ -493,7 +525,7 @@
     //top right button
     if (tRight) {
         self.topRight = [[GSTextViewNode alloc] initNodeWithFontNamed:_fontName];
-        [self.topRight setPosition:CGPointMake(boxSize.width*3/4, boxSize.height*3/4-fixedInsets)];
+        [self.topRight setPosition:CGPointMake(boxSize.width*3/4, boxSize.height*3/4-fixedInsets+self.boxPosition)];
     }
     self.topRight.fontColor = _fontColor;
     self.topRight.fontSize = _battleFontSize;
@@ -503,7 +535,7 @@
     //bottom left button
     if (bLeft) {
         self.bottomLeft = [[GSTextViewNode alloc] initNodeWithFontNamed:_fontName];
-        [self.bottomLeft setPosition:CGPointMake(boxSize.width*1/4, boxSize.height*1/4+fixedInsets)];
+        [self.bottomLeft setPosition:CGPointMake(boxSize.width*1/4, boxSize.height*1/4+fixedInsets+self.boxPosition)];
     }
     self.bottomLeft.fontColor = _fontColor;
     self.bottomLeft.fontSize = _battleFontSize;
@@ -513,7 +545,7 @@
     //bottom right button
     if (bRight) {
         self.bottomRight = [[GSTextViewNode alloc] initNodeWithFontNamed:_fontName];
-        [self.bottomRight setPosition:CGPointMake(boxSize.width*3/4, boxSize.height*1/4+fixedInsets)];
+        [self.bottomRight setPosition:CGPointMake(boxSize.width*3/4, boxSize.height*1/4+fixedInsets+self.boxPosition)];
     }
     self.bottomRight.fontColor = _fontColor;
     self.bottomRight.fontSize = _battleFontSize;
