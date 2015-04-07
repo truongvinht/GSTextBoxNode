@@ -179,7 +179,29 @@
         [self.nextPage setText:arrowLabel];
         
         //init arrow indicator
-        [self.nextPage setPosition:CGPointMake(screenSize.width-GSTEXT_BOTTOM_OFFSET, GSTEXT_BOTTOM_OFFSET+yPos)];
+        
+        switch (GSTEXT_ARROW_POSITION) {
+            case 1:
+                //top left
+                [self.nextPage setPosition:CGPointMake(GSTEXT_ARROW_OFFSET, self.boxBackground.size.height-GSTEXT_ARROW_OFFSET+yPos)];
+                break;
+            case 2:
+                //top right
+                [self.nextPage setPosition:CGPointMake(screenSize.width-GSTEXT_ARROW_OFFSET, self.boxBackground.size.height-GSTEXT_ARROW_OFFSET+yPos)];
+                break;
+            case 3:
+                //bottom left
+                [self.nextPage setPosition:CGPointMake(GSTEXT_ARROW_OFFSET, GSTEXT_ARROW_OFFSET+yPos)];
+                break;
+            case 4:
+                //bottom right
+                [self.nextPage setPosition:CGPointMake(screenSize.width-GSTEXT_ARROW_OFFSET, GSTEXT_ARROW_OFFSET+yPos)];
+                break;
+            default:
+                NSLog(@"GSTextBoxNode#Invalid position for arrow");
+                break;
+        }
+        
         self.nextPage.fontColor = _fontColor;
         
     }

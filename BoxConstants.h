@@ -54,7 +54,12 @@
 #define GSTEXT_MAX_ROWS_PER_PAGE 5
 
 /// arrow displayed on the bottom for continue to next page
-#define GSTEXT_BOTTOM_OFFSET 30.0f
+#define GSTEXT_ARROW_OFFSET 30.0f
+
+/// position of the arrow
+/// 1   2
+/// 3   4
+#define GSTEXT_ARROW_POSITION 4
 
 /// default font size
 #define GSTEXTBOX_DEFAULT_FONTSIZE 18
