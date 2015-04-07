@@ -26,6 +26,15 @@ box.isAutoContinue = YES;
 [box setBoxMode:TextBoxLayoutBattle];
 ```
 
+Example with box on different position
+```Objective-C
+GSTextBoxNode *box = [[GSTextBoxNode alloc] initWithFontName:@"Arial"  position:100];
+box.delegate = self;
+box.isAutoContinue = YES;
+[self addChild:box];
+[box typeText:@"OMG, the box is moved up by 100 px!" withDelay:0.1f withHide:NO];
+```
+
 To handle touch events in battle mode you need to implement the protocol TextBoxLayerDelegate and add
 ```Objective-C
 - (void)buttonWithLabel:(TextBoxButton)button{

@@ -82,7 +82,7 @@
     }else{
         NSMutableArray *components = [NSMutableArray array];
         
-        int numberOfItems = [allItems count]/numbers;
+        int numberOfItems = (int)[allItems count]/numbers;
         
         //need one more for an incomplete row
         if ([allItems count]%numbers > 0) {
