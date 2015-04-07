@@ -53,12 +53,13 @@
 /// number of rows displaying in the box
 #define GSTEXT_MAX_ROWS_PER_PAGE 5
 
-/// arrow displayed on the bottom for continue to next page
+/// arrow displayed for continue to next page
 #define GSTEXT_ARROW_OFFSET 30.0f
 
 /// position of the arrow
-/// 1   2
-/// 3   4
+/// | 1  2 |
+/// |      |
+/// | 3  4 |
 #define GSTEXT_ARROW_POSITION 4
 
 /// default font size
